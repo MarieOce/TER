@@ -5,6 +5,7 @@ Module module
   Integer, parameter:: PR=4
   real(kind=PR)::D_O2,D_Zn,dt,dx,dy,C1_0, C2_0,Tf,pi
   integer::N1,N2
+  character(len=3), dimension(4):: CL_type
   Real(kind=PR), dimension(:),allocatable::x, y
 
   ! On discrétise l'équation d_t c = div(D*grad(c)) dans un domaine
@@ -136,6 +137,8 @@ Contains
     READ(10,*)
     read(10,*)Tf
     READ(10,*)
+    read(10,*)dt
+    READ(10,*)
     read(10,*)N1 !Nombre de points selon x
     READ(10,*)
     read(10,*)N2 !Nombre de points selon y
@@ -143,6 +146,15 @@ Contains
     read(10,*)D_O2
     READ(10,*)
     read(10,*)D_Zn
+    READ(10,*)
+    read(10,*)CL_type(1)
+    READ(10,*)
+    read(10,*)CL_type(2)
+    READ(10,*)
+    read(10,*)CL_type(3)
+    READ(10,*)
+    read(10,*)CL_type(4)
+
   End Subroutine Lecture_fichier
 
   Subroutine Remplissage_Vect_CL(CL_h,CL_d,CL_b,CL_g)
@@ -186,10 +198,10 @@ Contains
       write(i,'(a)')"cell"
       write(i,'(a)')"ASCII"
       write(i,'(a)')"DATASET STRUCTURED_POINTS"
-      write(i,'(a)')"DIMENSIONS 50 50 1 "!, N2 ," ", N1 ," 1"
+      write(i,'(a)')"DIMENSIONS 100 100 1 "!, N2 ," ", N1 ," 1"
       write(i,'(a)')"ORIGIN 0 0 0"!, 0 , " " , 0 , " " , 0
       write(i,'(a)')"SPACING 1 1 0"! , 1 , " " , 1 ," " , 1
-      write(i,'(a)')"POINT_DATA 2500" !, N2*N1
+      write(i,'(a)')"POINT_DATA 10000" !, N2*N1
       write(i,'(a)')"SCALARS cell float"
       write(i,'(a)')"LOOKUP_TABLE default"
     End do

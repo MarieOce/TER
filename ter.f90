@@ -15,11 +15,12 @@ Program TER
   Call Lecture_fichier('C_IN.txt')
 
 
+
   !Initialisation
   cfl=0.4_PR
   dx=1._PR/N1
   dy=1._PR/N2
-  dt=1.   !cfl*dx*dy !! à revoir
+     !cfl*dx*dy !! à revoir
   pi=4*atan(1._PR)
 
   nb_iter=floor(Tf/dt)
@@ -50,9 +51,9 @@ Program TER
   Do While (t<Tf)
        if (mod(k,nfreq).eq.0) then
          ! Ecriture de la solution exacte et experimentale dans des fichiers .txt et .dat
-         Call Ecriture_fichier(t,'Sol_exacte','Sol_exp',k,C1)
+       Call Ecriture_fichier(t,'Sol_exacte','Sol_exp',k,C1)
        endif
-       Call moins_div_D_grad(D_O2,C1,AC_out,['Dir','Dir','Dir','Dir'],CL_h,CL_d,CL_b,CL_g)
+       Call moins_div_D_grad(D_O2,C1,AC_out,CL_type,CL_h,CL_d,CL_b,CL_g)
        call Euler_Explicite(C1,C1_1,AC_out)
        C1=C1_1
        k=k+1
@@ -63,5 +64,3 @@ Program TER
 
 
 End program TER
-
-!coucou
