@@ -3,17 +3,17 @@ Concentration initiale C1_0 mol/L
 Concentration initiale C2_0 mol/L
 1
 Temps final Tf s
-1000
+10
 Pas de temps dt s
 2.
 Nombre de segments d'espace N1
-99
+9
 Nombre de segments d'espace N2
-99
+9
 Coefficient de diffusion D1 m^2/s
-0.00001
+1.
 Coefficient de diffusion D2
-0.00001
+1.
 CL type 1 bord haut
 Dir
 CL type 2 bord droit

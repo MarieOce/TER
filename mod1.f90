@@ -2,12 +2,17 @@ Module module
   Implicit none
 
   ! Déclaration des coeff physiques, et des conditions aux limites
-  Integer, parameter:: PR=4
+  Integer, parameter:: PR=8
   real(kind=PR)::D_O2,D_Zn,dt,dx,dy,C1_0, C2_0,Tf,pi
   integer::N1,N2
   character(len=3), dimension(4):: CL_type
   Real(kind=PR), dimension(:),allocatable::x, y
 
+  integer, parameter :: i_bord_h = 1
+  integer, parameter :: i_bord_d = 2
+  integer, parameter :: i_bord_b = 3
+  integer, parameter :: i_bord_g = 4
+  
   ! On discrétise l'équation d_t c = div(D*grad(c)) dans un domaine
   ! rectangulaire découpé en (N1+1)*(N2+2) mailles notées
   ! K_{ij}. L'inconnue discrète est la fonction constante par morceaux
@@ -56,8 +61,8 @@ Contains
     real(kind=PR), dimension(0:N1,0:N2), intent(out)::AC_out
     real(kind=PR), dimension(0:N1,0:N2), intent(in)::C
     character(len=*), dimension(4), intent (in):: CL_type
-    real(kind=PR), dimension(0:N1), intent (in):: CL_h, CL_b
-    real(kind=PR), dimension(0:N2), intent (in):: CL_d, CL_g
+    real(kind=PR), dimension(0:N2), intent (in):: CL_h, CL_b
+    real(kind=PR), dimension(0:N1), intent (in):: CL_d, CL_g
     integer::i,j
     real(kind=PR)::F
   !  real(kind=PR), dimension(N1):: Flux_h, Flux_b
@@ -66,55 +71,68 @@ Contains
 
 
 
+    ! |K_{ij}| dc_ij/dt = (F(c_ij,c_{i+1j}) - F(c_{i-1j},c_ij)) h_y + (F(c_ij,c_{ij+1}) - F(c_{ij-1},c_ij)) h_x.
+    !
+    ! On programme une fonction G(D,cg,cd) = D*(cd-cg), de telle sorte que
+    ! F(c_ij,c_{i+1j}) = G(D,c_ij,c_{i+1j})/h_x et F(c_ij,c_{ij+1}) =
+    ! G(D,c_ij,c_{ij+1})/h_y.
     AC_out=0
-    ! Boucle sur les interfaces verticales (ij)|(i+1j)
+    ! Boucle sur les interfaces horizontales (i-1j)|(ij)
     Do j = 0,N2
+
        i = 0  ! Bord bas
-       if (CL_type(4)=='Dir') then
-         AC_out(i,j)=AC_out(i,j)+CL_b(j)
+       if (CL_type(i_bord_b)=='Dir') then
+          F = 2.0_pr*G(D,CL_b(j),C(i,j))/dy*dx
        else
-         AC_out(i,j)=AC_out(i,j)
+          F = -CL_b(j)*dx
        end if
-
-       Do i =1,N1-1
-         F=G(D,C(i-1,j),C(i,j))*dy/dx
-        AC_out(i-1,j)=AC_out(i-1,j)+F
-        AC_out(i,j)=AC_out(i,j)-F
+       AC_out(i,j) = AC_out(i,j) - F
+       
+       Do i =1,N1
+          F = G(D,C(i-1,j),C(i,j))/dy*dx
+          AC_out(i-1,j) = AC_out(i-1,j) + F
+          AC_out(i,j)   = AC_out(i,j)   - F
        end Do
-       i = N1 ! Bord haut
-       F=G(D,C(i-1,j),C(i,j))*dy/dx
-       if (CL_type(2)=='Dir') then
-         AC_out(i,j)=AC_out(i,j)+CL_h(j)-F
-         AC_out(i-1,j)=AC_out(i-1,j)+F
+       
+       i = N1+1 ! Bord haut
+       if (CL_type(i_bord_h)=='Dir') then
+          F = 2.0_pr*G(D,C(i-1,j),CL_h(j))/dy*dx
        else
-         AC_out(i,j)=AC_out(i,j)
+          F = CL_h(j)*dx
        end if
+       AC_out(i-1,j) = AC_out(i-1,j) + F
+
     end Do
 
-    ! Boucle sur les interfaces horizontales (ij)|(ij+1)
+    ! Boucle sur les interfaces verticales (ij-1)|(ij)
     Do i = 0,N1
-       j = 0 ! Bord gauche
-       if (CL_type(3)=='Dir') then
-         AC_out(i,j)=AC_out(i,j)+CL_g(i)
-       else
-         AC_out(i,j)=AC_out(i,j)
-       end if
 
-       Do j = 1,N2-1
-        F=G(D,C(i,j-1),C(i,j))*dx/dy
-        AC_out(i,j-1)=AC_out(i,j-1)+F
-        AC_out(i,j)=AC_out(i,j)-F
-       end Do
-       j = N2 ! Bord droit
-       F=G(D,C(i,j-1),C(i,j))*dx/dy
-       if (CL_type(1)=='Dir') then
-         AC_out(i,j)=AC_out(i,j)+CL_d(i)-F
-         AC_out(i,j-1)=AC_out(i,j-1)+F
+       j = 0  ! Bord gauche
+       if (CL_type(i_bord_g)=='Dir') then
+          F = 2.0_pr*G(D,CL_g(j),C(i,j))/dx*dy
        else
-         AC_out(i,j)=AC_out(i,j)
+          F = -CL_g(i)*dy
        end if
+       AC_out(i,j) = AC_out(i,j) - F
+       
+       Do j =1,N2
+          F = G(D,C(i,j-1),C(i,j))/dx*dy
+          AC_out(i,j-1) = AC_out(i,j-1) + F
+          AC_out(i,j)   = AC_out(i,j)   - F
+       end Do
+       
+       j = N2+1 ! Bord droit
+       if (CL_type(i_bord_d)=='Dir') then
+          F = 2.0_pr*G(D,C(i,j-1),CL_d(i))/dx*dy
+       else
+          F = CL_d(i)*dy
+       end if
+       AC_out(i,j-1) = AC_out(i,j-1) + F
+
     end Do
-    AC_out=AC_out*1./(dx*dy)
+
+    AC_out = AC_out / (dx*dy)
+    
   end subroutine moins_div_D_grad
 
 
@@ -158,16 +176,16 @@ Contains
   End Subroutine Lecture_fichier
 
   Subroutine Remplissage_Vect_CL(CL_h,CL_d,CL_b,CL_g)
-    real(kind=PR), dimension(0:N1), intent(out)::CL_h, CL_b
-    real(kind=PR), dimension(0:N2), intent(out)::CL_d, CL_g
-    integer:: i
+    real(kind=PR), dimension(0:N2), intent(out)::CL_h, CL_b
+    real(kind=PR), dimension(0:N1), intent(out)::CL_d, CL_g
+    integer:: i,j
     Do i=0,N1
-      CL_h(i)=0.00001
-      CL_b(i)=0.00001
+      CL_g(i)=0._pr
+      CL_d(i)=1._pr
     End do
-    Do i=0,N2
-      CL_d(i)=0.00001
-      CL_g(i)=0.00001
+    Do j=0,N2
+      CL_b(j)=(j+0.5_pr)*dx
+      CL_h(j)=(j+0.5_pr)*dx
     End do
   End Subroutine Remplissage_Vect_CL
 
@@ -198,10 +216,10 @@ Contains
       write(i,'(a)')"cell"
       write(i,'(a)')"ASCII"
       write(i,'(a)')"DATASET STRUCTURED_POINTS"
-      write(i,'(a)')"DIMENSIONS 100 100 1 "!, N2 ," ", N1 ," 1"
+      write(i,'(a)')"DIMENSIONS 10 10 1 "!, N2 ," ", N1 ," 1"
       write(i,'(a)')"ORIGIN 0 0 0"!, 0 , " " , 0 , " " , 0
       write(i,'(a)')"SPACING 1 1 0"! , 1 , " " , 1 ," " , 1
-      write(i,'(a)')"POINT_DATA 10000" !, N2*N1
+      write(i,'(a)')"POINT_DATA 100" !, N2*N1
       write(i,'(a)')"SCALARS cell float"
       write(i,'(a)')"LOOKUP_TABLE default"
     End do
