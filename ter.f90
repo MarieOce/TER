@@ -11,7 +11,7 @@ Program TER
   Real(kind=PR), dimension(:),allocatable:: CL_h,CL_d,CL_b,CL_g
   Real(kind=PR):: cfl, t
   integer::nb_iter, i, j, k, nfreq, nsort
-  
+
   !Lecture des constantes
   Call Lecture_fichier('C_IN.txt')
 
@@ -19,11 +19,10 @@ Program TER
 
   !Initialisation
   cfl=0.4_PR
-  dx=1.0_PR/real(N2+1,pr)
-  dy=0.5_PR/real(N1+1,pr)
+  dx=Lx/real(N2+1,pr)
+  dy=Ly/real(N1+1,pr)
   !cfl*dx*dy !! à revoir
   pi=4*atan(1._PR)
-
   nb_iter=floor(Tf/dt)
   nsort=int(Tf)
   nfreq=1 !nb_iter /nsort
@@ -36,29 +35,31 @@ Program TER
   do j = 0,N2
      do i = 0,N1
         !c(i,j,i_O2) = 1._pr
-        c(i,j,i_O2) = (j+0.5_pr)*dx
-        !c(i,j,i_O2) = cos(2*pi*(0.5_pr+j)*dx)*cos(2*pi*(0.5_pr+i)*dy)
+        !c(i,j,i_O2) = (j+0.5_pr)*dx
+        c(i,j,i_O2) = 0._PR!cos(2*pi*(0.5_pr+j)*dx)*cos(2*pi*(0.5_pr+i)*dy)
      end do
   end do
 
   k=0
   t=0._PR
 
-  Call Remplissage_Vect_CL(CL_h,CL_d,CL_b,CL_g)
+
 
   Do While (t<Tf)
 !!$     if (mod(k,nfreq).eq.0) then
 !!$        ! Ecriture de la solution exacte et experimentale dans des fichiers .txt et .dat
-!!$        Call Ecriture_fichier(t,'Sol_exacte','Sol_exp',k,c(:,:,i_O2))
+        Call Ecriture_fichier(t,'Sol_exacte','Sol_exp',k,c(:,:,i_O2))
 !!$     endif
      ! Schéma explicite, on doit faire c <- c - dt*(-div(G*grad(c)))
-     print *,c(:,:,i_O2)
-     read *
+     !print *,c(:,:,i_O2)
+     !read *
+     Call Remplissage_Vect_CL(CL_h,CL_d,CL_b,CL_g,c(:,:,i_O2))
      Call moins_div_D_grad(D_O2,c(:,:,i_O2),c_aux(:,:,i_O2),CL_type,CL_h,CL_d,CL_b,CL_g)
      c(:,:,i_O2) = c(:,:,i_O2) + dt*c_aux(:,:,i_O2)
      k = k+1
      t = k*dt
   End do
+
 
 
 

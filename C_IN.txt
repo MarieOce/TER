@@ -1,24 +1,38 @@
 Concentration initiale C1_0 mol/L
-1
+0.26
 Concentration initiale C2_0 mol/L
-1
+0.26
 Temps final Tf s
-10
+1000000.
 Pas de temps dt s
-2.
+100.
+Longueur dans la direction x Lx
+1.
+Longueur dans la direction y Ly
+1.
 Nombre de segments d'espace N1
-9
+79
 Nombre de segments d'espace N2
-9
+79
 Coefficient de diffusion D1 m^2/s
-1.
+0.00000024
 Coefficient de diffusion D2
-1.
+0.00000024
+Interfacial rate constant for the oxidation of zinc k_Zn
+0.0000232
+Interfacial rate constant for the oxidation of Fer k_Fe
+0.00000145
+Interfacial rate constant for the reduction of oxygen k_O2
+0.00001
+Constante de Faraday F
+96485.3329
+Maximum flux of oxygen dissolution in water F_O2*
+0.000035
 CL type 1 bord haut
-Dir
+Neu
 CL type 2 bord droit
-Dir
+Neu
 CL type 3 bord bas
-Dir
+Neu
 CL type 4 bord gauche
-Dir
+Neu
